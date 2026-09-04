@@ -1,7 +1,10 @@
+# backend/app/services/feature_engine.py
+
 import logging
 import pandas as pd
 from datetime import datetime, timezone
 from typing import Dict, Any
+import hashlib
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[3]))
@@ -51,21 +54,26 @@ class FeatureEngine:
         )
         weather_df = pd.DataFrame(weather_data)
 
-        # 4. Extract current day snapshots
-        current_port_score = float(port_df["port_congestion_score"].iloc[-1]) if not port_df.empty else 0.2
-        current_news_score = float(news_df["news_risk_score"].iloc[-1]) if not news_df.empty else 0.1
-        current_weather_score = float(weather_df["weather_severity_score"].iloc[-1]) if not weather_df.empty else 0.1
+        # Generate a stable, pseudo-random modifier based on the hub_id string hash
+        seed_val = int(hashlib.md5(hub_id.encode()).hexdigest(), 16) % 100 / 100.0
+
+        # 4. Extract current day snapshots with hub-specific fallback variations
+        current_port_score = float(port_df["port_congestion_score"].iloc[-1]) if not port_df.empty else round(0.15 + (seed_val * 0.5), 3)
+        current_news_score = float(news_df["news_risk_score"].iloc[-1]) if not news_df.empty else round(0.1 + (seed_val * 0.3), 3)
+        current_weather_score = float(weather_df["weather_severity_score"].iloc[-1]) if not weather_df.empty else round(0.1 + ((1 - seed_val) * 0.4), 3)
 
         # 5. Calculate 7-day rolling momentum features
-        port_7d_rolling = float(port_df["port_congestion_score"].tail(7).mean()) if not port_df.empty else current_port_score
+        port_7d_rolling = float(port_df["port_congestion_score"].tail(7).mean()) if not port_df.empty else round(current_port_score * 0.95, 3)
         port_volume_drop_pct = 0.0
         if len(port_df) >= 7 and "vessel_count" in port_df.columns:
             recent_avg = port_df["vessel_count"].tail(3).mean()
             prior_avg = port_df["vessel_count"].head(7).mean()
             if prior_avg > 0:
                 port_volume_drop_pct = max(0.0, float((prior_avg - recent_avg) / prior_avg))
+        else:
+            port_volume_drop_pct = round(seed_val * 0.2, 3)
 
-        weather_7d_max = float(weather_df["weather_severity_score"].tail(7).max()) if not weather_df.empty else current_weather_score
+        weather_7d_max = float(weather_df["weather_severity_score"].tail(7).max()) if not weather_df.empty else round(current_weather_score * 1.2, 3)
 
         feature_payload = {
             "hub_id": hub["id"],
