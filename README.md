@@ -60,8 +60,11 @@ Aegis aggregates and standardizes heterogeneous live data streams across global 
 ```bash
 git clone [https://github.com/ankit5803/Aegis.git](https://github.com/ankit5803/Aegis.git)
 cd Aegis
-2. Set Up the Python Backend
-Bash
+```
+
+### 2. Set Up the Python Backend
+
+```bash
 # Create and activate virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\Activate
@@ -74,12 +77,16 @@ python backend/app/core/train.py
 
 # Start the FastAPI Server
 python -m uvicorn backend.app.main:app --port 8000
-3. Set Up the Next.js Frontend
-Bash
+```
+
+### 3. Set Up the Next.js Frontend
+
+```bash
 cd frontend
 npm install
 npm run dev
 Access the executive command center locally at http://localhost:3000.
+```
 
 🧪 Model Validation & Stress Testing
 To validate the unsupervised model's responsiveness without traditional labeled test sets, Aegis features a rigorous scenario stress-testing suite (backend/app/core/evaluate.py):
@@ -92,6 +99,6 @@ Port Riots & Strikes: 92.5/100 ➔ 🚨 CRITICAL ANOMALY
 
 Run the evaluation suite locally:
 
-Bash
+```bash
 python backend/app/core/evaluate.py
 ```
