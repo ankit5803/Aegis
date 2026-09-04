@@ -11,15 +11,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Allowed origins for local development and live Vercel production frontend
-origins = [
-    "http://localhost:3000",
-    "https://frontend-sage-beta-68.vercel.app",
-]
-
+# Allow all origins, methods, and headers to prevent any CORS blockades
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
