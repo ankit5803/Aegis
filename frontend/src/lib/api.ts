@@ -19,17 +19,19 @@ export interface PredictionData {
   recommendation: string;
 }
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "https://aegis-5qdc.onrender.com/api/v1";
+// Explicitly append /api/v1 here so it's always included regardless of env vars
+const API_BASE = (
+  process.env.NEXT_PUBLIC_API_URL || "https://aegis-5qdc.onrender.com"
+).replace(/\/$/, "");
 
 export async function fetchHubs(): Promise<{ hubs: Hub[] }> {
-  const res = await fetch(`${API_BASE}/hubs`);
+  const res = await fetch(`${API_BASE}/api/v1/hubs`);
   if (!res.ok) throw new Error("Failed to fetch hubs");
   return res.json();
 }
 
 export async function fetchPrediction(hubId: string): Promise<PredictionData> {
-  const res = await fetch(`${API_BASE}/predict/${hubId}`);
+  const res = await fetch(`${API_BASE}/api/v1/predict/${hubId}`);
   if (!res.ok) throw new Error("Failed to fetch prediction");
   return res.json();
 }
