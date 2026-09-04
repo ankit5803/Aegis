@@ -1,3 +1,5 @@
+# backend/app/main.py
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.api.endpoints import predict
@@ -9,11 +11,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Crucial for local Next.js (port 3000) and Vercel production to hit this API
+# Allowed origins for local development and live Vercel production frontend
 origins = [
     "http://localhost:3000",
-    # Add your production Vercel domain here later
-    # "https://aegis-supply-chain.vercel.app" 
+    "https://frontend-sage-beta-68.vercel.app",
 ]
 
 app.add_middleware(
