@@ -3,24 +3,16 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List
+import hashlib
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("aegis.gdelt")
 
 class GDELTClient:
-    """
-    Client for querying the GDELT DOC 2.0 API for country-specific
-    geopolitical risk, labor strikes, embargoes, and trade sanctions.
-    """
     DOC_API_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
-
     DISRUPTION_QUERIES = [
-        "port strike",
-        "customs strike",
-        "shipping embargo",
-        "trade sanctions",
-        "maritime conflict",
-        "freight disruption"
+        "port strike", "customs strike", "shipping embargo", 
+        "trade sanctions", "maritime conflict", "freight disruption"
     ]
 
     def __init__(self):
@@ -31,9 +23,6 @@ class GDELTClient:
         })
 
     def fetch_geopolitical_events(self, country_code: str = "US", days_back: int = 7) -> List[Dict[str, Any]]:
-        """
-        Fetches supply chain disruption articles filtered by source country.
-        """
         logger.info(f"Querying GDELT news events for country: {country_code} (past {days_back} days)...")
         query_str = f"({' OR '.join(self.DISRUPTION_QUERIES)}) sourcecountry:{country_code}"
 
@@ -60,15 +49,11 @@ class GDELTClient:
             return self._generate_fallback_data(country_code, days_back)
 
     def process_news_risk(self, raw_articles: List[Dict[str, Any]], country_code: str = "US") -> pd.DataFrame:
-        """
-        Aggregates article volume into a normalized news_risk_score (0.0 to 1.0).
-        """
         if not raw_articles:
             return pd.DataFrame(columns=["date", "country_code", "article_count", "news_risk_score"])
 
         now = datetime.now(timezone.utc)
         count = len(raw_articles)
-        # Bounded scaling: 0.1 (peaceful baseline) to 0.95 (severe unrest)
         base_risk = min(0.1 + (count / 50.0) * 0.8, 0.95)
 
         record = {
@@ -80,10 +65,10 @@ class GDELTClient:
         return pd.DataFrame([record])
 
     def _generate_fallback_data(self, country_code: str, days_back: int, elevated: bool = False) -> List[Dict[str, Any]]:
-        """
-        Generates safe baseline events for offline development.
-        """
-        article_count = 16 if elevated else 5
+        seed = int(hashlib.md5(country_code.encode()).hexdigest(), 16)
+        base_articles = 2 + (seed % 10)
+        article_count = base_articles + 15 if elevated else base_articles
+        
         now_str = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         
         return [
@@ -95,7 +80,6 @@ class GDELTClient:
             }
             for _ in range(article_count)
         ]
-
 
 if __name__ == "__main__":
     client = GDELTClient()
